@@ -1,0 +1,175 @@
+import React from 'react';
+import { useState } from "react";
+import Button from './Button';
+import App from './App'
+import './Style.css'; // Import your CSS file
+
+const apiKey = 'key';
+const url = 'https://api.openai.com/v1/chat/completions';
+
+let userAmount; 
+
+function Parameters() {
+  const handleClick = () => {
+
+    let basics = " As an insurance fraud detection expert, I'd be wary of claims with suspicious timing, like a new policy followed immediately by a claim, or a delayed report of an incident. Inconsistencies in the story, damage, or timelines between the insured's account and other evidence would also raise red flags. Unrealistic claims, like very high damage estimates or stolen items with no proof of ownership, would be suspect. An absence of a police report, especially for accidents or thefts, could also be a sign of fraud. Looking at the insured themselves, financial hardship or a history of similar claims can be warning signs. Uncooperative behavior, such as being unwilling to answer questions or pressuring for a quick settlement, would be cause for concern. Legal representation early on, particularly by a lawyer known for fraudulent cases, would also be a red flag. Finally, inflated repair costs or medical bills, or repair shops/medical providers known for association with fraudulent claims, would warrant investigation. It's important to remember that these are just indicators and not guarantees of fraud, but they should trigger a closer look."
+    processMessagetoChatGPT(basics);
+    console.log(document.getElementById("Method").value);
+
+    let count = 0; 
+    console.log(parseInt(document.getElementById("Time").value));
+
+    if(document.getElementById("Witness").value == "nobody" || document.getElementById("Witness").value == "No one" || document.getElementById("Witness").value == "0 People")
+      count++; 
+    if(parseInt(document.getElementById("Time").value >= 6))
+    count++; 
+    if( document.getElementById("Method").value == "cash")
+    count++; 
+  if( parseInt(document.getElementById("Amount")) >= 100000)
+  count++; 
+let addOn = ""; 
+  if( count >= 2)
+  {
+    let addOn = "There is a good change that this is fraud";  
+  }
+  console.log(count);
+    
+    let message =  addOn+ "Here is the amount they are requesting: $ " + document.getElementById("Amount").value + "\n" 
+                + "This is the method of payment: " + document.getElementById("Method").value + "\n" 
+                + "This is how many months ago it happened: " + document.getElementById("Time").value + "\n"
+                + "This is the type of insurance requested: " + document.getElementById("Type").value + "\n" 
+                + "These were the witnesses: " + document.getElementById("Witness").value + "\n" 
+                + "This is where it happened: " + document.getElementById("Location").value + "\n"
+                + "This is a brief description of what happened: " + document.getElementById("Description").value + basics;  
+    
+    console.log(message);
+    processMessagetoChatGPT(message);
+  };
+
+  const [inputText, setInputText] = useState('');
+
+  // Function to handle input changes and update inputText state
+  const handleInputChange = (event) => {
+    setInputText(event.target.value);
+  };
+
+  // Function to handle form submission (if needed)
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    
+    console.log("Input Text:", inputText);
+    processMessagetoChatGPT(inputText)
+  };
+
+  
+  async function processMessagetoChatGPT(message) {
+      /*let apiMessages = message.map(() => {
+        let role = "user";
+        if(message.sender === "ChatGPT") {
+          role = "assistant";
+        } else {
+          role = "user";
+        }
+        return { role: role, content: message } //may have to see how video created the message (has sender and message property)
+      })*/
+
+      const systemMessage = {
+        role: "system",
+        content: "You are a renowned insurance fraud investigator. You are an expert in anomaly detection and pattern recognition in past insurance fraud cases. Based on your expertise, you must assign a percentage likelihood that the information provided is insurance fraud and give three reasons why you believe so. Some of these cases may not be fraud cases so be aware and in that situation, give a reason as to why you don't think it is insurance fraud."
+
+      }
+
+      const apiRequestBody = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+          systemMessage,
+          {role: "user", "content": message}
+        ]
+      }
+      await fetch(url, {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + apiKey,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(apiRequestBody)
+      }).then((data) => {
+        return data.json();
+      }).then((data) => {
+        let result = data.choices[0].message.content;
+        alert(result); 
+        console.log(result);
+      });
+  }
+
+  return (
+    <div className="gradient-background">
+      <div className="custom-text">
+        Input Parameters:
+      </div>
+      <div className="section-text">
+        Input Parameters
+      </div>
+      <div className="small-rectangles">
+        <div className="small-rectangle left">
+          <div className="input-container">
+          <input 
+                type="text"
+                placeholder='Claim Amount?'
+                id='Amount'
+                className='text-field-smaller'
+            ></input>
+            <input 
+                type="text"
+                placeholder='Payment Method?'
+                id='Method'
+                className='text-field-smaller'
+            ></input>
+            <input 
+                type="text"
+                placeholder='Months since incident?'
+                id='Time'
+                className='text-field-smaller'
+            ></input>
+            
+             </div>
+        </div>
+        <div className="small-rectangle right">
+          <div className="input-container">
+          <input 
+                type="text"
+                placeholder='Type of Claim?'
+                id='Type'
+                className='text-field-smaller'
+            ></input>
+            <input 
+                type="text"
+                placeholder='Witnesses?'
+                id='Witness'
+                className='text-field-smaller'
+            ></input>
+            <input 
+                type="text"
+                id="Location"
+                placeholder='Your Location During?'
+                className='text-field-smaller'
+            ></input>
+          </div>
+        </div>
+      </div>
+      <Button 
+        className='button'
+        onClick={handleClick}
+        >Submit
+      </Button>
+      <input 
+        type="text"
+        placeholder='50-100 Word Description'
+        id='Description'
+        className='description-box'
+      ></input>
+    </div>
+  );
+}
+
+export default Parameters; 
